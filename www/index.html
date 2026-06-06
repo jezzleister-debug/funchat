@@ -50,12 +50,11 @@
     }
 
     /* APP */
-    #app {
-      display: none; /* IMPORTANT FIX */
-      height: 100vh;
-      display: flex;
-    }
-
+#app {
+  display: none;
+  height: 100vh;
+  width: 100%;
+}
     /* SIDEBAR */
     #sidebar {
       width: 300px;
@@ -165,6 +164,23 @@
 #inputArea button:active {
   transform: scale(0.95);
 }
+#menu {
+  cursor: pointer;
+  font-size: 24px;
+  color: white;
+}
+
+#dropdown {
+  position: absolute;
+  right: 10px;
+  top: 50px;
+  background: #1f2c33;
+  display: none;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 1000;
+}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </style>
 </head>
@@ -188,14 +204,22 @@
   <!-- SIDEBAR -->
   <div id="sidebar">
 
-    <div id="topbar">
-      <div>FunChat</div>
-    </div>
 
-    <input id="searchBox" placeholder="Search user..." oninput="searchUser()">
+<div id="topbar">
+  <div>FunChat</div>
 
-    <div id="users"></div>
+  <div id="menu" onclick="toggleMenu()">⋮</div>
+
+  <div id="dropdown">
+    <div onclick="logout()">Logout</div>
+    <div onclick="changeUser()">Change Username</div>
+    <div onclick="changePass()">Change Password</div>
   </div>
+</div>
+
+<input id="searchBox" placeholder="Search user">
+
+<div id="users"></div>
 
   <!-- CHAT -->
   <div id="chat">
@@ -233,6 +257,8 @@ function register() {
 
 /* LOGIN (FIXED) */
 function login() {
+  alert("LOGIN CLICKED");
+function login() {
   socket.emit("login", {
     username: u.value,
     password: p.value
@@ -244,6 +270,11 @@ function login() {
     }
 
     me = res.username;
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+  });
+}
 
     // FIXED SCREEN SWITCH
     document.getElementById("login").style.display = "none";
@@ -294,10 +325,19 @@ function searchUser() {
       chatHeader.innerText = "Chat with " + searchBox.value;
     };
 
-    users.appendChild(div);
+users.appendChild(div);
   });
 }
+
+function toggleMenu() {
+  const dropdown = document.getElementById("dropdown");
+
+  dropdown.style.display =
+    dropdown.style.display === "flex" ? "none" : "flex";
+}
+
 </script>
+
 
 </body>
 </html>
