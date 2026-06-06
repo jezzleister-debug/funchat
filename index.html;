@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FunChat</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      font-family: Arial;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0b141a;
+      color: white;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* LOGIN */
+    #login {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: #0b141a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+:    #login input {
+      width: 240px;
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    #login button {
+      width: 260px;
+      padding: 10px;
+      margin: 5px;
+      background: #00a884;
+      border: none;
+      color: white;
+      border-radius: 6px;
+    }
+
+    /* {
+APP LAYOUT */
+    #	pp {
+#
+    /* SIDEBAR */
+    #sidebar {
+      width: 300px;
+      background: #111b21;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #topbar {
+      background: #202c33;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #search {
+      padding: 8px;
+      margin: 10px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+
+    .user {
+      padding: 12px;
+      border-bottom: 1px solid #222;
+      cursor: pointer;
+    }
+
+    .user:hover {
+      background: #1f2c33;
+    }
+
+    /* CHAT */
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #chatHeader {
+      background: #202c33;
+      padding: 10px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #0b141a;
+    }
+
+    .msg {
+      max-width: 60%;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 10px;
+      word-wrap: break-word;
+    }
+
+    .me {
+      background: #005c4b;
+      margin-left: auto;
+    }
+
+    .other {
+      background: #202c33;
+      margin-right: auto;
+    }
+
+    #inputArea {
+      display: flex;
+      padding: 10px;
+      background: #202c33;
+    }
+
+    #inputArea input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    #inputArea button {
+      margin-left: 5px;
+      padding: 10px;
+      background: #00a884;
+      border: none;
+      color: white;
+      border-radius: 6px;
+    }
+
+    /* MENU */
+    #menu {
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    #dropdown {
+      position: absolute;
+      right: 10px;
+      top: 50px;
+      background: #1f2c33;
+      display: none;
+      flex-direction: column;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    #dropdown div {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    #dropdown div:hover {
+      background: #2a3942;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>FunChat Login</h2>
+
+  <input id="u" placeholder="username (lowercase)">
+  <input id="p" type="password" placeholder="password (min 4 chars)">
+
+  <button onclick="register()">Register</button>
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+
+    <div id="topbar">
+      <div>FunChat</div>
+      <div id="menu" onclick="toggleMenu()">⋮</div>
+
+      <div id="dropdown">
+        <div onclick="logout()">Logout</div>
+        <div onclick="changeUser()">Change Username</div>
+        <div onclick="changePass()">Change Password</div>
+      </div>
+    </div>
+
+    <input id="searchBox" placeholder="Search user..." oninput="searchUser()">
+
+    <div id="users"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat">
+
+    <div id="chatHeader">Select a user</div>
+
+    <div id="messages"></div>
+
+    <div id="inputArea">
+      <input id="to" placeholder="username">
+      <input id="msg" placeholder="message">
+      <button onclick="send()">Send</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+const socket = io();
+
+let me = "";
+
+/* REGISTER */
+function register() {
+  socket.emit("register", {
+    username: u.value,
+    password: p.value
+  }, res => {
+    alert(res.msg || (res.ok ? "Registered!" : "Failed"));
+  });
+}
+
+/* LOGIN */
+function login() {
+  socket.emit("login", {
+    username: u.value,
+    password: p.value
+  }, res => {
+
+    if (!res.ok) {
+      alert("Login failed");
+      return;
+    }
+
+    me = res.username;
+
+    // FIXED SCREEN SWITCH
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+  });
+}
+/* SEND MESSAGE */
+function send() {
+  socket.emit("dm", {
+    to: to.value,
+    msg: msg.value
+  });
+
+  showMsg({ from: me, msg: msg.value });
+  msg.value = "";
+}
+
+/* RECEIVE */
+socket.on("dm", data => showMsg(data));
+
+function showMsg(data) {
+  const div = document.createElement("div");
+  div.className = "msg";
+
+  div.classList.add(data.from === me ? "me" : "other");
+
+  div.innerText = data.from + ": " + data.msg;
+
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+/* SEARCH USER */
+function searchUser() {
+  socket.emit("search", searchBox.value, res => {
+    users.innerHTML = "";
+
+    if (!res.ok) return;
+
+    const div = document.createElement("div");
+    div.className = "user";
+    div.innerText = searchBox.value + (res.online ? " 🟢" : " ⚪");
+
+    div.onclick = () => {
+      to.value = searchBox.value;
+      chatHeader.innerText = "Chat with " + searchBox.value;
+    };
+
+    users.appendChild(div);
+  });
+}
+
+/* MENU */
+function toggleMenu() {
+  dropdown.style.display =
+    dropdown.style.display === "flex" ? "none" : "flex";
+}
+
+/* LOGOUT */
+function logout() {
+  location.reload();
+}
+
+/* CHANGE USERNAME */
+function changeUser() {
+  let n = prompt("New username (lowercase):");
+
+  socket.emit("change username", { newName: n }, res => {
+    alert(res.ok ? "Updated" : "Failed");
+  });
+}
+
+/* CHANGE PASSWORD */
+function changePass() {
+  let p = prompt("New password:");
+
+  socket.emit("change password", { newPass: p }, res => {
+    alert(res.ok ? "Updated" : "Failed");
+  });
+}
+</script>
+
+</body>
+</html>

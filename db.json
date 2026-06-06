@@ -1,0 +1,21 @@
+{
+  "users": [
+    {
+      "username": "cyrus",
+      "password": "2222"
+    },
+    {
+      "username": "cyrusr",
+      "password": "1234"
+    },
+    {
+      "username": "lister ",
+      "password": "grand"
+    },
+    {
+      "username": "victor",
+      "password": "2026"
+    }
+  ],
+  "messages": []
+}
